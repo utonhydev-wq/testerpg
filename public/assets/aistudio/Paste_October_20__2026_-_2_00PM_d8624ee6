@@ -1,0 +1,946 @@
+# PROMPT MESTRE — SISTEMA WEB DE RPG DE MESA
+
+## 1. OBJETIVO DO PROJETO
+
+Desenvolva uma aplicação web completa, funcional, moderna e responsiva para administrar e jogar um RPG de mesa com regras próprias.
+
+O sistema deverá funcionar em computadores, notebooks, celulares Android e iPhones. O projeto será publicado na Vercel e utilizará Firebase como infraestrutura de autenticação e banco de dados.
+
+**Nome provisório:** RPG System.
+
+O sistema deverá transformar os manuais e as regras descritos neste prompt em funcionalidades reais, com fichas persistentes, combate, inventário dimensional, mapa compartilhado, habilidades, classes, capacidades inatas, sinergias, registros de progressão e painel do mestre.
+
+Não crie apenas uma demonstração visual. Implemente uma aplicação funcional, com persistência de dados, permissões de acesso, validações, tratamento de erros e sincronização entre usuários.
+
+Se já existir um projeto aberto, analise primeiro sua estrutura e preserve os componentes e funcionalidades úteis. Não apague dados existentes nem refaça desnecessariamente a arquitetura visual.
+
+---
+
+## 2. TECNOLOGIAS OBRIGATÓRIAS
+
+Utilize:
+
+- React com TypeScript.
+- Vite para desenvolvimento e build.
+- Tailwind CSS para estilização, caso compatível com a estrutura existente.
+- Firebase Authentication para login.
+- Cloud Firestore como banco de dados principal.
+- Firebase Storage para imagens, mapas e arquivos, quando necessário.
+- Listeners do Firestore para sincronização em tempo real.
+- Vercel para hospedagem.
+- Variáveis de ambiente para as credenciais e configurações do Firebase.
+
+Use versões estáveis e mutuamente compatíveis das dependências. Não misture versões incompatíveis de Vite, React ou plugins.
+
+Não coloque chaves administrativas, segredos de servidor ou credenciais privadas no código frontend.
+
+Crie uma estrutura de projeto organizada, com componentes reutilizáveis, serviços de banco de dados, tipos TypeScript, regras de negócio e telas separadas.
+
+---
+
+## 3. AUTENTICAÇÃO, CONTAS E PERMISSÕES
+
+Implemente autenticação real com Firebase Authentication.
+
+Tipos de usuário:
+
+### Administrador geral
+- Gerencia configurações gerais e usuários.
+- Pode criar e administrar campanhas.
+- Pode consultar e administrar personagens conforme as permissões autorizadas.
+- Pode configurar regras, fórmulas, requisitos e progressões pendentes.
+- Pode gerenciar conteúdo do sistema e consultar registros de auditoria.
+
+### Mestre da campanha
+- Cria e administra suas campanhas.
+- Convida jogadores.
+- Gerencia mapas, NPCs, monstros, objetos e encontros.
+- Controla turnos, ações, condições e resultados de combate.
+- Aprova ou corrige progressão, habilidades e capacidades inatas.
+- Pode editar os personagens da campanha de acordo com suas permissões.
+
+### Jogador
+- Acessa somente as campanhas das quais participa.
+- Consulta e administra os próprios personagens conforme as permissões da campanha.
+- Visualiza suas fichas, habilidades, classes, inventário e histórico.
+- Pode executar ações de jogo autorizadas.
+- Não pode alterar diretamente os atributos, recursos ou resultados de outros jogadores.
+- Não pode conceder habilidades, itens ou progressão a si mesmo sem autorização.
+
+A interface deve ocultar funcionalidades não autorizadas, mas a segurança real deverá ser aplicada nas regras do Firestore e, quando necessário, em Cloud Functions.
+
+Implemente:
+- Cadastro e login.
+- Recuperação de senha.
+- Perfil do usuário.
+- Entrada em campanha por convite ou código.
+- Associação de usuários a personagens.
+- Logout e tratamento de sessões expiradas.
+
+Se for necessário utilizar PIN, implemente-o como mecanismo adicional de acesso, nunca como substituto de autenticação e autorização seguras.
+
+---
+
+## 4. CAMPANHAS E MAPAS COMPARTILHADOS
+
+Cada campanha deverá possuir dados e participantes independentes.
+
+O mestre poderá importar uma imagem para utilizar como mapa, definir sua escala e criar marcadores sobre ela.
+
+Funcionalidades:
+- Zoom e movimentação do mapa.
+- Posicionamento de personagens, NPCs, monstros, objetos e marcadores.
+- Arrastar e mover tokens.
+- Alterar nome, imagem, tamanho e visibilidade dos tokens.
+- Definir quais tokens cada jogador pode controlar.
+- Salvar posições e alterações no Firestore.
+- Sincronizar as mudanças para todos os participantes em tempo real.
+- Permitir ocultar informações dos jogadores quando necessário.
+- Manter o mapa e os marcadores após recarregar a página.
+
+Permita que o mestre escolha entre movimento livre e movimento por grade. Não imponha uma regra de movimentação sem configuração.
+
+Os mapas deverão ser separados por campanha. Um jogador não poderá visualizar mapas privados de outras campanhas.
+
+Implemente controles adequados para toque em dispositivos móveis.
+
+---
+
+## 5. FICHAS DE PERSONAGEM
+
+Crie fichas dinâmicas, persistentes e vinculadas ao usuário e à campanha.
+
+### Modelo: Humano
+
+Campos:
+- Nome.
+- Vida atual e máxima.
+- Energia atual e máxima.
+- Inteligência.
+- Força.
+- Vontade.
+- Agilidade.
+- Classe ou classes adquiridas, conforme as regras.
+- Habilidades.
+- Capacidades inatas.
+- Inventário.
+- Itens equipados.
+- Aparência.
+- História.
+- Títulos.
+- Condições ativas.
+- Histórico de ações e progressão.
+
+Valores iniciais fornecidos:
+
+- Vida: 30/30.
+- Energia: 30/30.
+- Inteligência: 12.
+- Força: 6.
+- Vontade: 6.
+- Agilidade: 6.
+
+A progressão de atributos originalmente apresentada inclui o marcador `{0/600}` para cada atributo. Preserve essa informação como requisito de progressão configurável, sem presumir que seja experiência universal para todos os personagens.
+
+O modelo de Humano possui a indicação `+0/6 por fase` para Vida e Energia. Cadastre-a como regra de progressão pendente de definição, sem aplicar automaticamente um cálculo cuja interpretação não foi confirmada.
+
+### Modelo: Humano Superior — ARENA
+
+- Vida: 90/90.
+- Energia: 90/90.
+- Inteligência: 36.
+- Força: 18.
+- Vontade: 18.
+- Agilidade: 18.
+
+### Modelo: Transcendente — 1x1
+
+- Vida: 180/180.
+- Energia: 180/180.
+- Inteligência: 72.
+- Força: 36.
+- Vontade: 36.
+- Agilidade: 36.
+
+Os três modelos devem funcionar como modelos iniciais de ficha, sem impedir o mestre de criar outros tipos de personagem.
+
+Não estabeleça níveis gerais obrigatórios para os personagens. Os níveis mencionados nas regras são níveis de habilidades, classes ou capacidades específicas, conforme cada mecânica.
+
+---
+
+## 6. SISTEMA DE CLASSES
+
+Implemente as cinco classes originais.
+
+### Guerreiro
+- Energia: Física.
+- Atributos básicos: Força e Agilidade.
+- Capacidade de classe: Movimentos.
+- Afinidade: Material.
+- Cor: Vermelho.
+- Mudança de regra no nível 1: Reforço muscular.
+- Mudança de regra no nível 2: Mutação corporal.
+- Atributos avançados defensivo e ofensivo: Defesa corporal e Materializar componente.
+
+### Feiticeiro
+- Energia: Mana.
+- Atributos básicos: Inteligência e Vontade.
+- Capacidade de classe: Feitiços.
+- Afinidade: Elemento.
+- Cor: Azul.
+- Mudança de regra no nível 1: Noção mágica.
+- Mudança de regra no nível 2: Aprimoramento neural.
+- Atributos avançados defensivo e ofensivo: Resistência mental e Circuito de mana.
+
+### Marcial
+- Energia: Aura.
+- Atributos básicos: Agilidade e Vontade.
+- Capacidade de classe: Técnicas.
+- Afinidade: Estado.
+- Cor: Laranja.
+- Mudança de regra no nível 1: Mente estável.
+- Mudança de regra no nível 2: Despertar sensorial.
+- Atributos avançados defensivo e ofensivo: Absorção de impacto e Adaptação circunstancial.
+
+### Entidade
+- Energia: Neutra.
+- Atributos básicos: Força e Vontade.
+- Capacidade de classe: Regras.
+- Afinidade: Conceito.
+- Cor: Cinza.
+- Mudança de regra no nível 1: Natureza anômala.
+- Mudança de regra no nível 2: Estado vibratório.
+- Atributos avançados defensivo e ofensivo: Distorção de fluxo e Interferência de ambiente.
+
+### Espírito
+- Energia: Prana.
+- Atributos básicos: Força e Inteligência.
+- Capacidade de classe: Manifestações.
+- Afinidade: Plano.
+- Cor: Amarelo.
+- Mudança de regra no nível 1: Ciclo astral.
+- Mudança de regra no nível 2: Incorporação etérea.
+- Atributos avançados defensivo e ofensivo: Regeneração e Intangibilidade material.
+
+### Regras gerais das classes
+
+As classes não são obrigatórias na criação do personagem. Devem poder ser adquiridas conforme os feitos, a utilização das energias e as regras de progressão estabelecidas pelo mestre.
+
+Os atributos avançados somente devem ficar disponíveis quando o personagem possuir acesso à classe correspondente.
+
+Os atributos avançados são dois por classe, um defensivo e outro ofensivo, no conjunto de nível 1 descrito acima.
+
+Atributos avançados não devem ser tratados como atributos básicos comuns. Eles podem conceder capacidades especiais, mas não devem ser utilizados em testes mentais ou corporais comuns quando as regras originais proíbem esse uso.
+
+Permita que o mestre configure mudanças de regras, bônus passivos e desbloqueios de atributos avançados nos níveis 1, 2 e 3.
+
+Não invente os bônus ou as fórmulas ausentes.
+
+---
+
+## 7. DIAGRAMA DE RELAÇÕES ENTRE CLASSES
+
+Cadastre as seguintes relações direcionais:
+
+- Entidade, coração cinza: aponta para Espírito e Guerreiro.
+- Feiticeiro, coração azul: aponta para Entidade e Marcial.
+- Guerreiro, coração vermelho: aponta para Feiticeiro e Espírito.
+- Marcial, coração laranja: aponta para Guerreiro e Entidade.
+- Espírito, coração amarelo: aponta para Marcial e Feiticeiro.
+
+Crie uma tela visual com nós e conexões, utilizando cores e setas para mostrar as relações.
+
+As relações devem ser armazenadas no banco de dados e consultáveis pela aplicação.
+
+Não interprete automaticamente essas setas como vantagem, fraqueza ou multiplicador de dano. Os efeitos mecânicos dessas relações só poderão ser aplicados se forem definidos explicitamente pelo mestre ou por outra regra do manual.
+
+---
+
+## 8. GRIMÓRIO — SISTEMA DE HABILIDADES
+
+Implemente um módulo completo para registrar, executar e evoluir habilidades individuais.
+
+Cada habilidade deverá possuir:
+- Nome.
+- Descrição.
+- Tipo de energia.
+- Categoria da habilidade.
+- Categoria de ativação.
+- Nível atual.
+- Custo de energia.
+- Requisitos.
+- Aplicações.
+- Efeitos.
+- Duração.
+- Alcance.
+- Área de efeito.
+- Limitações.
+- Efeitos ocultos.
+- Histórico de utilização.
+- Requisitos de evolução.
+
+### Tipos de energia das habilidades
+
+1. Neutra.
+2. Física.
+3. Aura.
+4. Mana.
+5. Espiritual.
+
+A energia espiritual usada nessa classificação de habilidades deve permanecer distinguível do nome Prana quando necessário. Não faça conversões automáticas entre categorias sem uma regra explícita.
+
+### Categorias das habilidades
+
+- Autoral: criada pelo jogador; o autor conhece os detalhes de sua habilidade.
+- Recompensa: adquirida como recompensa da Dungeon, podendo possuir funções ocultas.
+- Requisito: adquirida por condições secretas, exploração ou feitos de energia; pode ter funções ocultas.
+- Monstro: habilidade sem o mesmo tipo de mistério das habilidades ocultas, com desempenho e evolução próprios.
+- Personalizada: permite maior flexibilidade de custos, efeitos e ativação.
+
+### Tipos de ativação
+
+- Ativação simples.
+- Passiva.
+- Passiva condicional.
+- Ativa personalizável.
+- Ativa fixa ou de contrato.
+- Custo nulo adicional.
+
+Regras fornecidas:
+- A partir do nível 3, habilidades ativas podem ganhar uma versão passiva simplificada, sem custo de energia.
+- A partir do nível 3, habilidades passivas podem ganhar uma versão ativa com custo de energia.
+- Contratos com custo igual ou superior a 20 possuem exceção a essa regra, conforme o manual.
+- Habilidades personalizadas podem utilizar custos e modos de ativação definidos pelo usuário.
+- No nível 6, a habilidade alcança o chamado Poder Final.
+- Existe também uma referência a uma aplicação mais forte no nível 10, mas a relação entre os níveis 6 e 10 ainda precisa ser confirmada.
+
+Por isso, o sistema deverá permitir configurar os níveis máximos e as regras de evolução. Não bloqueie habilidades no nível 6 nem crie automaticamente um nível 10 antes de o mestre confirmar a regra definitiva.
+
+### Progressão por usos
+
+- Nível 1 para nível 2: 6 usos.
+- Nível 2 para nível 3: 12 usos.
+- Nível 3 para nível 4: 18 usos.
+- Nível 4 para nível 5: 36 usos.
+- Nível 5 para nível 6: 72 usos.
+
+Cada habilidade terá seu próprio contador.
+
+Usos de efeitos ocultos poderão valer dois ou mais usos. O multiplicador deverá ser configurável conforme a regra aprovada.
+
+Registre cada utilização com data, personagem, habilidade, nível, custo, resultado e campanha.
+
+A evolução deverá ser validada pelo sistema segundo as regras configuradas e, quando necessário, aprovada pelo mestre.
+
+### Exemplo de habilidade
+
+Cadastre a habilidade de referência `[Grama Azul Prateada]` como exemplo de dados:
+
+- Nível inicial: 1.
+- Custo informado: 12 de energia.
+- Produz brotos de grama azul prateada dentro de um raio de 5 metros.
+- Quantidade inicial: resultado de d10 + 10, conforme o texto original.
+- Pode manipular o crescimento das vinhas e formar estruturas.
+- Há aplicações específicas nos níveis 2 e 5.
+- A descrição original menciona absorção de energia e dano no nível máximo.
+
+Mantenha a descrição completa como texto de referência. Não implemente cálculos cuja interpretação esteja ambígua sem permitir a configuração pelo mestre.
+
+---
+
+## 9. CAPACIDADES INATAS DAS CLASSES
+
+Capacidades inatas não são a mesma coisa que habilidades do Grimório.
+
+Elas representam feitos obtidos pelo controle avançado da energia de uma classe. Após uma ação bem-sucedida envolvendo esse controle, o feito poderá ser registrado e repetido.
+
+Cada capacidade inata deverá ter:
+- Nome.
+- Classe.
+- Energia.
+- Caminho.
+- Nível.
+- Custo.
+- Atributos mínimos.
+- Efeito especial.
+- Condição negativa, quando houver.
+- Descrição passo a passo.
+- Valores fixos ou variáveis.
+- Requisitos para uso.
+- Histórico de execução.
+
+Parâmetros possíveis incluem pressão, velocidade, dano, precisão, defesa, alcance, duração, controle, intensidade, condição e outros valores definidos pela capacidade.
+
+### Caminhos por nível
+
+O modelo original apresenta:
+- Nível 1: caminhos 1 e 2.
+- Nível 2: caminhos 1 e 2.
+- Nível 3: caminhos 1, 2, 3, 4 e 5.
+
+Cadastre essas opções, permitindo configuração posterior caso o mestre confirme outras regras de desbloqueio.
+
+### Fórmulas originais de custo
+
+Preserve as expressões como referências configuráveis:
+
+- Guerreiro: `{for/agi + (nível)d6}`.
+- Marcial: `{von/agi + (nível)d6}`.
+- Feiticeiro: `{int/von + (nível)d6}`.
+- Espírito: `{int/for + (nível)d6}`.
+- Entidade: `{for/von + (nível)d6}`.
+
+A interpretação da barra entre atributos ainda não está definida. Portanto, não escolha automaticamente uma operação matemática.
+
+Crie um campo de fórmula original e outro de fórmula validada. O mestre poderá selecionar os atributos, a operação matemática, a rolagem e as regras de arredondamento depois de confirmar a interpretação.
+
+Não permita que fórmulas inválidas sejam executadas silenciosamente.
+
+---
+
+## 10. CATÁLOGO SISTÊMICO DE ELEMENTOS
+
+Crie um catálogo editável que armazene as categorias e os elementos fornecidos.
+
+### Centro: Sistêmica — ciano
+
+Elementos:
+- Aflição.
+- Ação.
+- Interação.
+- Conversão.
+- Combinação.
+- Ativação.
+
+### Neutra — cinza
+
+- Propagação.
+- Reverberação.
+- Perpetuação.
+- Transmissão.
+- Intervenção.
+- Assimilação.
+
+### Mana — azul
+
+- Radiação.
+- Aceleração.
+- Sintetização.
+- Adsorção.
+- Conservação.
+- Sintonização.
+
+### Física — vermelho
+
+- Deterioração.
+- Concentração.
+- Pressurização.
+- Sustentação.
+- Transição.
+- Recomposição.
+
+### Aura — laranja
+
+- Aquisição.
+- Circulação.
+- Impulsão.
+- Agregação.
+- Depleção.
+- Emissão.
+
+### Prana — amarelo
+
+- Supressão.
+- Condesação.
+- Conexão.
+- Potencialização.
+- Canalização.
+- Irradiação.
+
+Preserve a grafia original dos nomes, incluindo “Condesação”, até confirmação de eventual correção.
+
+Cada elemento deverá possuir nome, categoria, cor, descrição, estado de publicação e referência ao texto de origem.
+
+Não invente os efeitos mecânicos dos elementos apenas a partir de seus nomes.
+
+---
+
+## 11. RECURSOS DE COMBATE
+
+O diagrama de recursos de combate define dois grupos.
+
+### Sistêmico
+
+Elementos diretos:
+- Habilidade.
+- Característica.
+- Título.
+
+Elementos relacionados:
+- Condição.
+- Modo.
+- Sinergia.
+
+### Intrínseco
+
+Elementos diretos:
+- Classe.
+- Caminho.
+- Afinidade.
+
+Elementos relacionados:
+- Inata.
+- Golpe final.
+
+### Recurso central
+
+Energia: nó de conexão entre os sistemas e os tipos de energia manifestada.
+
+### Fator externo
+
+Terreno.
+
+Crie entidades de banco de dados e componentes de interface separados para esses grupos. Não trate todos os recursos como se fossem habilidades.
+
+O terreno deverá ser associado à campanha e ao contexto do combate. Seus efeitos mecânicos poderão ser configurados conforme as regras disponíveis.
+
+---
+
+## 12. COMBATE E TURNOS
+
+Crie uma tela de combate com:
+- Turno atual.
+- Personagem ativo.
+- Ordem de iniciativa, quando configurada.
+- Ações disponíveis e consumidas.
+- Recursos atuais.
+- Habilidades e capacidades utilizáveis.
+- Condições ativas.
+- Registro de acontecimentos.
+- Controle do mestre para avançar ou encerrar turnos.
+
+O material original distingue ações corporais, ações mentais e ações de classe.
+
+Mantenha essas categorias separadas e permita configurar os limites de cada uma por personagem, classe e regra de campanha.
+
+Não presuma que Inteligência ou Agilidade determinam a quantidade exata de ações sem uma fórmula validada.
+
+### Reações
+
+Quando o turno de outro personagem estiver acontecendo, o jogador poderá registrar uma reação se a ação inimiga o envolver, conforme as regras da campanha.
+
+Também deverá ser possível registrar a preparação de uma reação utilizando recursos do próprio turno, quando permitido.
+
+### Ações de classe e sinergia
+
+A sinergia pode permitir o uso de capacidades inatas em ações mentais ou corporais, segundo a regra original.
+
+O sistema deverá validar as condições da sinergia e registrar a categoria de ação consumida.
+
+Não invente custos, testes ou quantidades de ações ausentes no manual.
+
+---
+
+## 13. SINERGIA
+
+Sinergia representa uma melhoria coletiva entre aliados semelhantes, permitindo coordenação em combate e bônus individuais.
+
+Os três fatores básicos são:
+
+1. Armas com efeitos da mesma categoria.
+2. Caminhos iguais nas classes.
+3. Habilidades com a mesma energia e categoria.
+
+A quantidade de participantes e os fatores compartilhados deverão ser registrados para calcular os bônus quando as regras forem configuradas.
+
+### Sinergias especiais
+
+**3 Espias Demais**
+- Requer três seres em sinergia.
+- Permite uma vez a sinergia por um turno após utilizar uma inata de mesma tendência.
+- O texto original também cita habilidades com a mesma energia e inatas de mesma tendência, como ataque ou defesa.
+
+**My Besto Friendo**
+- Requer dois seres em sinergia.
+- Envolve caminhos opostos nas respectivas classes.
+- Requer condição negativa igual adquirida no mesmo turno.
+- Exige as afinidades anti-horária e horária à classe, uma para cada participante.
+- A duração indicada é duas vezes a duração normal enquanto a condição negativa permanecer ativa.
+
+**Sung Jin-Woo**
+- Requer um ser em sinergia.
+- A duração indicada é quatro vezes a duração normal.
+- As condições originais envolvem uso de energia da classe no terreno correspondente, condições recebidas, abate de monstro, item equipado aprimorado pela afinidade, utilização de habilidades e ativação de características de outras energias.
+
+Cadastre cada requisito separadamente. O mestre deverá poder configurar ou confirmar os critérios de ativação e a interpretação das durações.
+
+### Bônus registrados
+
+- Mana/Feiticeiro: `2d6°`.
+- Aura/Marcial: `1d6° + 6*`.
+- Física/Guerreiro: `12*`.
+- Prana/Espírito: `2d6° ou 12*`.
+- Neutra/Entidade: `18*`.
+
+Preserve os símbolos originais `°` e `*`. Não os interprete como multiplicadores ou operações matemáticas até que sua função seja confirmada.
+
+---
+
+## 14. INVENTÁRIO DIMENSIONAL
+
+Implemente um inventário holográfico com interface azul, semitransparente e organizada em quadrados.
+
+Características:
+- Capacidade dimensional infinita conforme a regra original.
+- Organização visual de itens em espaços quadrados.
+- Itens equipados e itens armazenados.
+- Busca e filtros.
+- Registro de quantidade e propriedades.
+- Inserção e retirada de itens.
+- Registro de energia associada ao armazenamento.
+- Acesso durante a campanha.
+- Salvamento permanente.
+- Atualização em tempo real quando o estado do inventário mudar.
+
+As cinco energias podem ser inseridas, uma de cada vez, conforme o manual: Física, Mana, Aura, Neutra e Prana.
+
+### Abertura e fechamento
+
+- A ativação exige escolher a orientação da tela.
+- A abertura custa 1 ponto de energia sistêmica por ação enquanto a tela permanecer aberta.
+- A tela não acompanha livremente a visão do usuário.
+- O mestre poderá configurar o custo e os efeitos caso uma atualização futura do manual altere essas regras.
+- Se a energia tocar a tela com força excessiva, o inventário poderá fechar e ficar indisponível até o próximo turno.
+- Ao morrer, o personagem expulsa os itens armazenados, conforme a regra original.
+
+### Usos em combate
+
+**Plataforma**
+- A tela pode ser posicionada deitada acima do usuário.
+- Distância indicada: 1 metro a cada 24 pontos de Inteligência.
+- Pode servir para escalar ou evitar ataques.
+
+**Escudo**
+- Área indicada: 1,5 metro de largura por 1 metro de altura.
+- Protege completamente contra combos de energias dentro da área da tela.
+- Limite indicado: uma vez por turno.
+
+**Teleporte**
+- Toque com força igual ou superior a 18 permite fechar e reabrir o inventário sem custo adicional de energia.
+- O texto indica uma repetição adicional a cada 12 pontos de Vontade.
+
+Implemente esses usos com controles e registros de combate. As interpretações matemáticas e os limites que ainda não estiverem claros devem ficar configuráveis pelo mestre.
+
+---
+
+## 15. VIDA, ENERGIA E RECUPERAÇÃO
+
+### Vida
+
+- Vida cheia significa ausência de dano acumulado.
+- Perder mais de 8 pontos de vida de uma vez garante um efeito negativo.
+- Vida abaixo de 6 garante um efeito negativo passivo.
+- Passar um dia sem efeito negativo pode recuperar 1 ponto de vida.
+- Dormir com energia cheia recupera pontos de vida.
+
+Cadastre os efeitos negativos como condições que podem ser administradas pelo mestre.
+
+### Energia
+
+A energia representa estamina e mana e é dividida em três partes:
+- Fome.
+- Sede.
+- Sono.
+
+Cada componente representa um terço da energia, segundo o manual.
+
+O texto original também diz que a energia não se recupera automaticamente, que o excesso de atividade física consome energia e que a falta de fome, sede e sono pode dobrar o consumo.
+
+Como o procedimento completo não foi fornecido, não invente regras de consumo ou recuperação além das explicitamente definidas.
+
+### Recuperação por consumo
+
+Regra registrada:
+- Consumir parte de uma planta ou animal.
+- Fórmula original: `Vida Total / (Vida / 3)`.
+
+Essa expressão está pendente de esclarecimento. Armazene-a como fórmula original e permita que o mestre defina a fórmula executável correta.
+
+### Recuperação de vida por descanso
+
+- Duração indicada: `Vida máxima / 6` turnos.
+- Recuperação indicada: `(Inteligência + Vontade + Agilidade + Força) / 6`.
+
+Permita configurar arredondamento e regras de descanso. Não arredonde silenciosamente nem execute fórmulas inválidas.
+
+---
+
+## 16. NPCs, MONSTROS, ITENS E CONDIÇÕES
+
+Implemente cadastros próprios para:
+- NPCs.
+- Monstros.
+- Itens.
+- Equipamentos.
+- Condições.
+- Títulos.
+- Terrenos.
+- Características.
+- Modos.
+- Afinidades.
+- Caminhos.
+
+Cada registro deve possuir identificador, campanha quando aplicável, descrição, criador, data de criação e histórico de alterações.
+
+NPCs devem ter fichas próprias e poder ser interpretados pelo mestre durante a sessão.
+
+Monstros podem possuir habilidades, energias, atributos e condições próprios.
+
+Itens podem conter efeitos e energias associadas, mas esses efeitos deverão ser configurados conforme as regras originais.
+
+Não preencha os cadastros com conteúdo inventado apresentado como regra oficial. Se forem necessários dados de demonstração, identifique-os claramente como exemplos.
+
+---
+
+## 17. BANCO DE DADOS FIREBASE / CLOUD FIRESTORE
+
+Crie a estrutura de dados real para sustentar todas as funcionalidades.
+
+Utilize coleções principais semelhantes às seguintes:
+
+### Usuários e campanhas
+
+- `users`
+- `campaigns`
+- `campaign_members`
+- `invitations`
+- `sessions`
+
+### Personagens e combate
+
+- `characters`
+- `character_attributes`
+- `character_classes`
+- `combat_encounters`
+- `combat_turns`
+- `combat_actions`
+- `combat_conditions`
+- `combat_logs`
+
+### Classes e regras
+
+- `classes`
+- `class_relations`
+- `class_rule_changes`
+- `advanced_attributes`
+- `class_paths`
+- `class_affinities`
+- `class_capabilities`
+
+### Grimório
+
+- `abilities`
+- `ability_levels`
+- `ability_usages`
+- `ability_unlocks`
+- `ability_effects`
+- `ability_categories`
+
+### Sinergia
+
+- `synergy_rules`
+- `synergy_groups`
+- `synergy_participants`
+- `synergy_activations`
+
+### Recursos e elementos
+
+- `system_elements`
+- `energy_types`
+- `characteristics`
+- `titles`
+- `modes`
+- `conditions`
+- `terrains`
+
+### Inventário e arquivos
+
+- `items`
+- `inventories`
+- `inventory_entries`
+- `equipment`
+- `maps`
+- `map_tokens`
+- `assets`
+
+A estrutura definitiva pode ser adaptada às melhores práticas do Firestore, mas deverá preservar a separação lógica dessas entidades.
+
+Cada documento deverá possuir campos tipados, identificadores estáveis e referências consistentes.
+
+Evite duplicar dados que possam ser alterados em uma única fonte. Quando uma duplicação for necessária para desempenho, documente sua finalidade e implemente a atualização consistente.
+
+Utilize transações ou operações em lote quando múltiplos registros precisarem mudar em conjunto.
+
+---
+
+## 18. SEGURANÇA DO FIRESTORE
+
+Crie um arquivo completo `firestore.rules`.
+
+Requisitos:
+- Usuários só podem acessar dados autorizados.
+- Jogadores só podem alterar os próprios dados permitidos.
+- O mestre só pode administrar campanhas das quais é responsável ou para as quais recebeu autorização.
+- O administrador geral terá as permissões previstas na política do sistema.
+- Um usuário não poderá promover a si mesmo a mestre ou administrador.
+- O cliente não poderá alterar diretamente campos protegidos, como permissões, autoria de registros, resultados validados ou progresso aprovado.
+- Documentos privados não poderão ser acessados apenas porque seus identificadores são conhecidos.
+
+Se operações críticas exigirem confiança adicional, implemente Cloud Functions ou outro mecanismo de servidor autenticado.
+
+Inclua regras do Firebase Storage para arquivos privados e públicos conforme o tipo de conteúdo.
+
+Não utilize regras abertas de desenvolvimento em produção.
+
+---
+
+## 19. INTERFACE E EXPERIÊNCIA DO USUÁRIO
+
+Crie uma interface de RPG moderna, com aparência profissional e navegação clara.
+
+Diretrizes:
+- Tema escuro elegante.
+- Detalhes holográficos azuis para o inventário.
+- Cores das energias consistentes em todo o sistema.
+- Painel lateral no computador.
+- Navegação compacta em dispositivos móveis.
+- Fichas organizadas por seções.
+- Painéis de combate com leitura rápida.
+- Indicadores claros de Vida, Energia, condições e ações disponíveis.
+- Formulários com validação.
+- Confirmação para ações destrutivas.
+- Mensagens de erro e sucesso.
+- Estados de carregamento.
+- Telas vazias com instruções úteis.
+- Acessibilidade e contraste adequados.
+
+Não reduza a interface móvel a uma versão desktop espremida. Organize os componentes de acordo com o espaço disponível.
+
+Garanta que modais, menus, tabelas, formulários, mapas e inventário funcionem em telas pequenas.
+
+---
+
+## 20. CONFIGURAÇÃO DE REGRAS PENDENTES
+
+Crie uma seção exclusiva no painel do mestre chamada **Regras do Sistema**.
+
+Cada regra poderá ter:
+- Nome.
+- Descrição original.
+- Fórmula original.
+- Fórmula validada.
+- Estado: pendente, validada ou desativada.
+- Responsável pela validação.
+- Data da alteração.
+- Histórico de versões.
+
+As regras pendentes devem permanecer visíveis e não podem ser executadas automaticamente.
+
+Inclua como pendências iniciais:
+1. Interpretação das fórmulas de custo das capacidades inatas.
+2. Relação definitiva entre o Poder Final do nível 6 e a aplicação mais forte no nível 10.
+3. Fórmula exata para recuperação de energia por consumo.
+4. Cálculo exato da quantidade de ações por turno.
+5. Significado dos símbolos `°` e `*` nos bônus de sinergia.
+6. Interpretação matemática da distância e das repetições do inventário dimensional.
+7. Regras completas de consumo e recuperação de energia.
+8. Cálculo dos bônus básicos de sinergia conforme quantidade de participantes.
+9. Regras completas de progressão dos atributos e das classes.
+
+Permita que o mestre confirme ou altere esses dados sem precisar modificar o código-fonte.
+
+---
+
+## 21. PUBLICAÇÃO NA VERCEL
+
+Prepare o projeto para publicação.
+
+Entregue:
+- Código completo.
+- `package.json`.
+- Configuração do Vite.
+- Arquivo `.env.example`.
+- Arquivos de regras do Firestore.
+- Arquivos de regras do Storage.
+- Índices necessários do Firestore.
+- Instruções para configurar o Firebase.
+- Instruções para ativar Authentication e Firestore.
+- Instruções para configurar as variáveis de ambiente na Vercel.
+- Instruções para executar localmente.
+- Instruções para publicar e atualizar a aplicação.
+- Tratamento de erros de configuração.
+- Orientações para testar permissões e sincronização.
+
+Nunca inclua chaves privadas ou credenciais administrativas em arquivos públicos.
+
+O aplicativo deverá continuar funcionando após recarregar a página e acessar a conta em outro dispositivo.
+
+---
+
+## 22. TESTES E CRITÉRIOS DE ACEITAÇÃO
+
+Antes de considerar o projeto concluído, valide:
+
+1. O cadastro e o login funcionam.
+2. As campanhas são isoladas entre usuários.
+3. As fichas permanecem salvas após recarregar a página.
+4. O mestre consegue criar mapas e posicionar tokens.
+5. As posições dos tokens são sincronizadas com os jogadores autorizados.
+6. As habilidades registram usos e progressão corretamente.
+7. As classes e seus atributos avançados são exibidos conforme os desbloqueios.
+8. As capacidades inatas são separadas das habilidades do Grimório.
+9. As ações de combate são registradas por categoria.
+10. As sinergias verificam os requisitos configurados.
+11. O inventário salva itens e respeita as regras configuradas.
+12. Os cálculos pendentes não são executados como se fossem regras confirmadas.
+13. As regras de segurança impedem alterações não autorizadas.
+14. A interface funciona em Android, iPhone e computador.
+15. O build de produção conclui sem erros.
+
+Crie testes unitários para cálculos, testes de integração para operações críticas e verificações de permissões.
+
+---
+
+## 23. ORDEM DE DESENVOLVIMENTO
+
+Desenvolva em etapas, preservando o que já estiver funcionando:
+
+**Etapa 1:** estrutura do projeto, Firebase, autenticação e permissões.
+
+**Etapa 2:** campanhas, usuários, fichas e persistência.
+
+**Etapa 3:** classes, relações entre classes, energias e catálogo sistêmico.
+
+**Etapa 4:** Grimório, capacidades inatas e progressão.
+
+**Etapa 5:** combate, ações, condições e sinergias.
+
+**Etapa 6:** inventário dimensional, itens e equipamentos.
+
+**Etapa 7:** mapas, tokens e sincronização em tempo real.
+
+**Etapa 8:** painel do mestre, regras configuráveis, auditoria e testes.
+
+**Etapa 9:** responsividade, correções, segurança e publicação.
+
+Não pare após gerar as telas. Implemente os fluxos, conecte-os ao Firebase e verifique o funcionamento de cada etapa.
+
+Se o contexto ou os limites da ferramenta impedirem a implementação completa em uma única execução, priorize a fundação funcional e continue por etapas, sem substituir funcionalidades reais por botões decorativos ou dados salvos apenas na memória do navegador.
+
+## INSTRUÇÃO FINAL
+
+As regras deste RPG são autorais e devem ser preservadas. Não substitua mecânicas por regras de outros sistemas, não invente fórmulas e não transforme hipóteses em regras oficiais.
+
+Quando houver ambiguidade, mantenha o texto original, marque a regra como pendente e permita que o mestre a valide.
+
+Comece analisando a estrutura atual do projeto. Em seguida, implemente a aplicação funcional, o banco de dados, as permissões e as telas, seguindo as etapas acima. Ao final, informe o que foi efetivamente implementado, quais configurações externas ainda são necessárias e como publicar o sistema na Vercel.

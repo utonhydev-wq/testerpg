@@ -1,0 +1,6 @@
+{
+  "name": "RPG System",
+  "description": "Sistema completo para RPG de mesa com regras autorais, fichas dinâmicas, mapa tático, combate por turnos, Grimório de habilidades, capacidades inatas, sinergias e inventário dimensional.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
